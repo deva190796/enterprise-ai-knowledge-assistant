@@ -1,11 +1,13 @@
 import streamlit as st
-import requests
+
 from api import (
     ask_ai,
     get_chat_sessions,
     get_chat_messages,
-    delete_chat
+    delete_chat,
+    get_documents
 )
+
 st.title("Enterprise AI Knowledge Assistant")
 
 if "token" not in st.session_state:
@@ -38,6 +40,7 @@ if response.status_code == 200:
         col1, col2 = st.sidebar.columns([5, 1])
 
         with col1:
+
             if st.button(
                 session["title"],
                 key=f"chat_{session['id']}",
@@ -73,16 +76,13 @@ if response.status_code == 200:
                     st.session_state.session_id = None
 
                 st.rerun()
-# -------------------------------
-# Load documents
-# -------------------------------
-headers = {
-    "Authorization": f"Bearer {st.session_state['token']}"
-}
 
-response = requests.get(
-    "http://127.0.0.1:8000/documents/",
-    headers=headers
+# ---------------------------------------
+# Load Documents
+# ---------------------------------------
+
+response = get_documents(
+    st.session_state["token"]
 )
 
 documents = []
@@ -93,11 +93,11 @@ if response.status_code == 200:
 document_names = ["All Documents"]
 
 for doc in documents:
-    documents_name = doc.get(
+    document_name = doc.get(
         "original_filename",
         doc["filename"]
     )
-    document_names.append(documents_name)
+    document_names.append(document_name)
 
 selected_document = st.selectbox(
     "📄 Select Document",
@@ -107,16 +107,18 @@ selected_document = st.selectbox(
 if selected_document == "All Documents":
     selected_document = None
 
-# -------------------------------
+# ---------------------------------------
 # Chat History
-# -------------------------------
+# ---------------------------------------
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    
+
 if "session_id" not in st.session_state:
     st.session_state.session_id = None
 
 for message in st.session_state.messages:
+
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
@@ -126,17 +128,19 @@ prompt = st.chat_input(
 
 if prompt:
 
-    st.session_state.messages.append({
-        "role": "user",
-        "content": prompt
-    })
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": prompt
+        }
+    )
 
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.spinner("Thinking..."):
 
-       response = ask_ai(
+        response = ask_ai(
             question=prompt,
             token=st.session_state["token"],
             document=selected_document,
@@ -153,10 +157,12 @@ if prompt:
         answer = data["answer"]
         sources = data["sources"]
 
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer
-        })
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        )
 
         with st.chat_message("assistant"):
 

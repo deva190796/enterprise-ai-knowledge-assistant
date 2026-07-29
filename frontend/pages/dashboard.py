@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
-
-BACKEND_URL = "http://127.0.0.1:8000"
+from api import BASE_URL
 
 st.set_page_config(
     page_title="Dashboard",
@@ -15,16 +14,19 @@ if "token" not in st.session_state:
     st.stop()
 
 headers = {
-    "Authorization": f"Bearer {st.session_state.token}"
+    "Authorization": f"Bearer {st.session_state['token']}"
 }
 
 response = requests.get(
-    f"{BACKEND_URL}/dashboard/",
+    f"{BASE_URL}/dashboard/",
     headers=headers
 )
 
 if response.status_code != 200:
-    st.error(response.json()["detail"])
+    try:
+        st.error(response.json()["detail"])
+    except Exception:
+        st.error(response.text)
     st.stop()
 
 data = response.json()
@@ -57,6 +59,7 @@ with col4:
         "🤖 Messages",
         data["total_messages"]
     )
+
 st.divider()
 
 col1, col2 = st.columns(2)
@@ -73,7 +76,6 @@ with col1:
     else:
         st.info("No documents uploaded.")
 
-
 with col2:
 
     st.subheader("💬 Recent Chats")
@@ -85,6 +87,7 @@ with col2:
 
     else:
         st.info("No chats available.")
+
 st.divider()
 
 st.subheader("📈 Analytics")
@@ -97,6 +100,7 @@ chart_data = {
 }
 
 st.bar_chart(chart_data)
+
 st.subheader("📊 Distribution")
 
 pie_data = {
