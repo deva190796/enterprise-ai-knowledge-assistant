@@ -9,7 +9,7 @@ import os
 
 BASE_URL = os.getenv(
     "BACKEND_URL",
-    "http://127.0.0.1:8000"
+    "https://enterprise-ai-knowledge-assistant-4sye.onrender.com"
 )
 
 def register(full_name, email, password):
